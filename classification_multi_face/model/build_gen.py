@@ -1,6 +1,7 @@
 import model.svhn2mnist as svhn2mnist
 import model.usps as usps
 import model.syn2gtrsb as syn2gtrsb
+import model.multipie as multipie
 # import model.syndig2svhn as syndig2svhn
 
 def Generator(source, target, pixelda=False):
@@ -12,6 +13,8 @@ def Generator(source, target, pixelda=False):
         return syn2gtrsb.Feature()
     elif source == 'svhn_bal':
         return svhn2mnist.Feature()
+    elif source.startswith('mp'):
+        return multipie.Feature()
 
 
 def Classifier(source, target):
@@ -23,4 +26,6 @@ def Classifier(source, target):
         return syn2gtrsb.Predictor()
     if source == 'svhn_bal':
         return svhn2mnist.Predictor()
+    if source.startswith('mp'):
+        return multipie.Predictor()
 

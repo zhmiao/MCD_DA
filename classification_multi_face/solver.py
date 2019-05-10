@@ -36,19 +36,20 @@ class Solver(object):
         ############################
 
         src = source
-        tgt_list = ['mnist', 'mnistm', 'usps', 'svhn_bal']
+        tgt_list = ['mp05', 'mp08', 'mp09', 'mp13', 'mp14']
+        # tgt_list = ['mnist', 'svhn_bal']
         tgt_list.remove(src)
         # src = 'svhn_bal'
         if target != 'multi':
             tgt_list = [target]
-        datadir = '/home/zhmiao/datasets/digits/'
+        self.datadir = '/home/zhmiao/datasets/MultiPIE/cropped'
 
         self.train_src_data = load_data_multi(src, 'train', batch=self.batch_size, 
-            rootdir=join(datadir, src), num_channels=3, 
+            rootdir=join(self.datadir, src), num_channels=3, 
             image_size=32, download=True, kwargs={'num_workers': 1, 'pin_memory': True})
 
         self.train_tgt_data = load_data_multi(tgt_list, 'train', batch=self.batch_size, 
-            rootdir=datadir, num_channels=3, 
+            rootdir=self.datadir, num_channels=3, 
             image_size=32, download=True, kwargs={'num_workers': 1, 'pin_memory': True})
 
         print('load finished!')
@@ -59,8 +60,7 @@ class Solver(object):
             self.G.torch.load(
                 '%s/%s_to_%s_model_epoch%s_G.pt' % (self.checkpoint_dir, self.source, self.target, args.resume_epoch))
             self.G.torch.load(
-                '%s/%s_to_%s_model_epoch%s_G.pt' % (
-                    self.checkpoint_dir, self.source, self.target, self.checkpoint_dir, args.resume_epoch))
+                '%s/%s_to_%s_model_epoch%s_G.pt' % (self.checkpoint_dir, self.source, self.target, args.resume_epoch))
             self.G.torch.load(
                 '%s/%s_to_%s_model_epoch%s_G.pt' % (self.checkpoint_dir, self.source, self.target, args.resume_epoch))
 
@@ -103,7 +103,7 @@ class Solver(object):
         return - torch.mean(output * torch.log(output + 1e-6))
 
     def discrepancy(self, out1, out2):
-        return torch.mean(torch.abs(F.softmax(out1) - F.softmax(out2)))
+        return torch.mean(torch.abs(F.softmax(out1, dim=0) - F.softmax(out2, dim=0)))
 
     def train(self, epoch, record_file=None):
         criterion = nn.CrossEntropyLoss().cuda()
@@ -129,8 +129,7 @@ class Solver(object):
 
             img_s = img_s.cuda()
             img_t = img_t.cuda()
-            imgs = Variable(torch.cat((img_s, \
-                                       img_t), 0))
+
             label_s = Variable(label_s.long().cuda())
 
             img_s = Variable(img_s)
@@ -242,25 +241,31 @@ class Solver(object):
         self.G.eval()
         self.C1.eval()
         self.C2.eval()
-        test_loss = 0
-        correct1 = 0
-        correct2 = 0
-        correct3 = 0
-        size = 0
+        
 
-        for dom in ['mnist', 'mnistm', 'usps', 'svhn_bal']:
+        for dom in ['mp05', 'mp08', 'mp09', 'mp13', 'mp14', 'mp19']:
+
+            test_loss = 0
+            correct1 = 0
+            correct2 = 0
+            correct3 = 0
+            size = 0
+
             print('Testing on %s'%dom)
             loader = load_data_multi(dom, 'test', batch=self.batch_size, 
-                            rootdir=datadir, num_channels=3, 
+                            rootdir=join(self.datadir, dom), num_channels=3, 
                             image_size=32, download=True, kwargs={'num_workers': 1, 'pin_memory': True})
             for batch_idx, (data, target) in enumerate(loader):
             # for batch_idx, data in enumerate(self.dataset_test):
                 # img = data['T']
                 # label = data['T_label']
+
                 img = data
                 label = target
                 img, label = img.cuda(), label.long().cuda()
-                img, label = Variable(img, volatile=True), Variable(label)
+                img, label = Variable(img), Variable(label)
+                img.require_grad = False
+                label.require_grad = False
                 feat = self.G(img)
                 output1 = self.C1(feat)
                 output2 = self.C2(feat)

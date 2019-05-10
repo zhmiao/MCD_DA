@@ -37,7 +37,7 @@ class Solver(object):
 
         src = source
         tgt_list = ['mnist', 'mnistm', 'usps', 'svhn_bal']
-        tgt_list = ['mnist', 'svhn_bal']
+        # tgt_list = ['mnist', 'svhn_bal']
         tgt_list.remove(src)
         # src = 'svhn_bal'
         if target != 'multi':
@@ -103,7 +103,7 @@ class Solver(object):
         return - torch.mean(output * torch.log(output + 1e-6))
 
     def discrepancy(self, out1, out2):
-        return torch.mean(torch.abs(F.softmax(out1) - F.softmax(out2)))
+        return torch.mean(torch.abs(F.softmax(out1, dim=0) - F.softmax(out2, dim=0)))
 
     def train(self, epoch, record_file=None):
         criterion = nn.CrossEntropyLoss().cuda()
@@ -242,13 +242,16 @@ class Solver(object):
         self.G.eval()
         self.C1.eval()
         self.C2.eval()
-        test_loss = 0
-        correct1 = 0
-        correct2 = 0
-        correct3 = 0
-        size = 0
+        
 
-        for dom in ['mnist', 'mnistm', 'usps', 'svhn_bal', 'swit']:
+        for dom in ['mnist', 'mnistm', 'usps', 'svhn_bal', 'uspsm', 'swit']:
+
+            test_loss = 0
+            correct1 = 0
+            correct2 = 0
+            correct3 = 0
+            size = 0
+
             print('Testing on %s'%dom)
             loader = load_data_multi(dom, 'test', batch=self.batch_size, 
                             rootdir=join(self.datadir, dom), num_channels=3, 
@@ -257,10 +260,13 @@ class Solver(object):
             # for batch_idx, data in enumerate(self.dataset_test):
                 # img = data['T']
                 # label = data['T_label']
+
                 img = data
                 label = target
                 img, label = img.cuda(), label.long().cuda()
-                img, label = Variable(img, volatile=True), Variable(label)
+                img, label = Variable(img), Variable(label)
+                img.require_grad = False
+                label.require_grad = False
                 feat = self.G(img)
                 output1 = self.C1(feat)
                 output2 = self.C2(feat)

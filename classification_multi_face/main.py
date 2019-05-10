@@ -33,9 +33,9 @@ parser.add_argument('--save_model', action='store_true', default=False,
                     help='save_model or not')
 parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 1)')
-parser.add_argument('--source', type=str, default='svhn', metavar='N',
+parser.add_argument('--source', type=str, default='mp05', metavar='N',
                     help='source dataset')
-parser.add_argument('--target', type=str, default='mnist', metavar='N', help='target dataset')
+parser.add_argument('--target', type=str, default='multi', metavar='N', help='target dataset')
 parser.add_argument('--use_abs_diff', action='store_true', default=False,
                     help='use absolute difference value as a measurement')
 args = parser.parse_args()
@@ -54,29 +54,17 @@ def main():
                     checkpoint_dir=args.checkpoint_dir,
                     save_epoch=args.save_epoch)
     record_num = 0
-    if args.source == 'usps' or args.target == 'usps':
-
-        record_train = 'record/%s_%s_k_%s_alluse_%s_onestep_%s_%s.txt' % (
-            args.source, args.target, args.num_k, args.all_use, args.one_step, record_num)
-        record_test = 'record/%s_%s_k_%s_alluse_%s_onestep_%s_%s_test.txt' % (
-            args.source, args.target, args.num_k, args.all_use, args.one_step, record_num)
-        while os.path.exists(record_train):
-            record_num += 1
-            record_train = 'record/%s_%s_k_%s_alluse_%s_onestep_%s_%s.txt' % (
-                args.source, args.target, args.num_k, args.all_use, args.one_step, record_num)
-            record_test = 'record/%s_%s_k_%s_alluse_%s_onestep_%s_%s_test.txt' % (
-                args.source, args.target, args.num_k, args.all_use, args.one_step, record_num)
-    else:
+    
+    record_train = 'record/%s_%s_k_%s_onestep_%s_%s.txt' % (
+        args.source, args.target, args.num_k, args.one_step, record_num)
+    record_test = 'record/%s_%s_k_%s_onestep_%s_%s_test.txt' % (
+        args.source, args.target, args.num_k, args.one_step, record_num)
+    while os.path.exists(record_train):
+        record_num += 1
         record_train = 'record/%s_%s_k_%s_onestep_%s_%s.txt' % (
             args.source, args.target, args.num_k, args.one_step, record_num)
         record_test = 'record/%s_%s_k_%s_onestep_%s_%s_test.txt' % (
             args.source, args.target, args.num_k, args.one_step, record_num)
-        while os.path.exists(record_train):
-            record_num += 1
-            record_train = 'record/%s_%s_k_%s_onestep_%s_%s.txt' % (
-                args.source, args.target, args.num_k, args.one_step, record_num)
-            record_test = 'record/%s_%s_k_%s_onestep_%s_%s_test.txt' % (
-                args.source, args.target, args.num_k, args.one_step, record_num)
 
     if not os.path.exists(args.checkpoint_dir):
         os.mkdir(args.checkpoint_dir)
@@ -92,10 +80,14 @@ def main():
             else:
                 num = solver.train_onestep(t, record_file=record_train)
             count += num
-            if t % 1 == 0:
-                solver.test(t, record_file=record_test, save_model=args.save_model)
-            if count >= 20000:
-                break
+            if (t + 1) % 10 == 0:
+                if (t + 1) == args.max_epoch:
+                    solver.test(t, record_file=record_test, save_model=True)
+                else:
+                    solver.test(t, record_file=record_test, save_model=False)
+
+            # if count >= 20000:
+            #     break
 
 
 if __name__ == '__main__':

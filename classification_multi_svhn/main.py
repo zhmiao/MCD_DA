@@ -35,7 +35,7 @@ parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 1)')
 parser.add_argument('--source', type=str, default='svhn', metavar='N',
                     help='source dataset')
-parser.add_argument('--target', type=str, default='mnist', metavar='N', help='target dataset')
+parser.add_argument('--target', type=str, default='multi', metavar='N', help='target dataset')
 parser.add_argument('--use_abs_diff', action='store_true', default=False,
                     help='use absolute difference value as a measurement')
 args = parser.parse_args()
@@ -93,7 +93,11 @@ def main():
                 num = solver.train_onestep(t, record_file=record_train)
             count += num
             if (t + 1) % 10 == 0:
-                solver.test(t, record_file=record_test, save_model=args.save_model)
+                if (t + 1) == args.max_epoch:
+                    solver.test(t, record_file=record_test, save_model=True)
+                else:
+                    solver.test(t, record_file=record_test, save_model=False)
+
             # if count >= 20000:
             #     break
 
