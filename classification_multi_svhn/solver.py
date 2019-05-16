@@ -244,7 +244,7 @@ class Solver(object):
         self.C2.eval()
         
 
-        for dom in ['mnist', 'mnistm', 'usps', 'svhn_bal', 'uspsm', 'swit']:
+        for dom in ['mnist', 'mnistm', 'usps', 'svhn_bal', 'uspsm', 'swit', 'synnum']:
 
             test_loss = 0
             correct1 = 0

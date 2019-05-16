@@ -6,3 +6,4 @@ from . import mnistm
 from . import svhn_balanced
 from . import multipie
 from . import swit
+from . import synnum
